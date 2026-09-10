@@ -4,6 +4,7 @@
 import json
 import sqlite3
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -49,6 +50,15 @@ def init_db(conn: sqlite3.Connection, n: int) -> None:
             conjecture_holds INTEGER NOT NULL,
             conjecture_violations INTEGER NOT NULL,
             not_applicable INTEGER NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS graph_results (
+            graph6 TEXT PRIMARY KEY,
+            spectrum TEXT NOT NULL,
+            compute_seconds REAL NOT NULL
         )
         """
     )
@@ -104,7 +114,21 @@ def mark_complete(conn: sqlite3.Connection) -> None:
     conn.execute("UPDATE progress SET status = 'complete' WHERE id = 0")
 
 
-def run(n: int, db_path, checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL) -> None:
+def record_graph_details(
+    conn: sqlite3.Connection, graph6: str, spectrum: set, compute_seconds: float
+) -> None:
+    conn.execute(
+        "INSERT INTO graph_results (graph6, spectrum, compute_seconds) VALUES (?, ?, ?)",
+        (graph6, json.dumps(sorted(spectrum)), compute_seconds),
+    )
+
+
+def run(
+    n: int,
+    db_path,
+    checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL,
+    record_details: bool = False,
+) -> None:
     conn = sqlite3.connect(db_path)
     try:
         init_db(conn, n)
@@ -121,10 +145,14 @@ def run(n: int, db_path, checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL)
         for index, graph6 in enumerate(generate.run_geng(n)):
             if index <= last_index:
                 continue
+            start = time.perf_counter()
             spectrum = core.spectrum_from_graph6(graph6)
+            compute_seconds = time.perf_counter() - start
             holds = conjecture.check(n, spectrum)
             n_minus_1_in_spectrum = (n - 1) in spectrum
             record_result(conn, index, graph6, spectrum, n_minus_1_in_spectrum, holds)
+            if record_details:
+                record_graph_details(conn, graph6, spectrum, compute_seconds)
             if (index + 1) % checkpoint_interval == 0:
                 conn.commit()
         mark_complete(conn)
@@ -143,8 +171,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--db", type=str, default=None, help="path to results sqlite db (default: results/order_<n>.sqlite)"
     )
+    parser.add_argument(
+        "--record-details",
+        action="store_true",
+        help=(
+            "also store each graph's graph6 encoding, full spectrum, and compute "
+            "time in a graph_results table, for research queries (e.g. finding "
+            "all graphs with a singleton spectrum). Off by default since it adds "
+            "significant data at large orders."
+        ),
+    )
     args = parser.parse_args()
     db_path = args.db or f"results/order_{args.n}.sqlite"
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    run(args.n, db_path)
-    print(f"Done. Results in {db_path}")
+    start = time.perf_counter()
+    run(args.n, db_path, record_details=args.record_details)
+    elapsed = time.perf_counter() - start
+    print(f"Done. Results in {db_path} (this run took {elapsed:.2f}s)")
