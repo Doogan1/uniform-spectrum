@@ -1,5 +1,7 @@
 results/
 build/
+.venv/
+local-python-include/
 __pycache__/
 *.pyc
 *.so
