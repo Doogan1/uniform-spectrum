@@ -122,7 +122,7 @@ pytest>=7.0
 Run:
 ```bash
 pip install -r requirements.txt
-pytest tests/test_graph6.py -v
+python -m pytest tests/test_graph6.py -v
 ```
 Expected: FAIL with `ModuleNotFoundError: No module named 'uniform_spectrum_core'`
 
@@ -283,7 +283,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cmake -S core -B core/build -Dpybind11_DIR=$(python -m pybind11 --cmakedir)
 cmake --build core/build
-pytest
+python -m pytest
 ```
 ```
 
@@ -293,7 +293,7 @@ Run:
 ```bash
 cmake -S core -B core/build -Dpybind11_DIR=$(python -m pybind11 --cmakedir)
 cmake --build core/build
-pytest tests/test_graph6.py -v
+python -m pytest tests/test_graph6.py -v
 ```
 Expected: PASS (4 tests)
 
@@ -393,7 +393,7 @@ def test_petersen_graph_matches_legacy_implementation():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_spectrum.py -v`
+Run: `python -m pytest tests/test_spectrum.py -v`
 Expected: FAIL with `AttributeError: module 'uniform_spectrum_core' has no attribute 'spectrum_from_graph6'`
 
 - [ ] **Step 3: Write the implementation**
@@ -504,7 +504,7 @@ add_library(spectrum_core STATIC
 Run:
 ```bash
 cmake --build core/build
-pytest tests/test_spectrum.py -v
+python -m pytest tests/test_spectrum.py -v
 ```
 Expected: PASS (9 tests)
 
@@ -580,7 +580,7 @@ def test_core_matches_legacy_for_all_graphs_of_order(n):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_generate.py -v`
+Run: `python -m pytest tests/test_generate.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'py'` (or `py.generate`)
 
 - [ ] **Step 3: Write the implementation**
@@ -633,7 +633,7 @@ def run_geng(n: int) -> Iterator[str]:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pytest tests/test_generate.py tests/test_cross_validation.py -v`
+Run: `python -m pytest tests/test_generate.py tests/test_cross_validation.py -v`
 Expected: PASS (all tests; `test_cross_validation.py` exhaustively checks 1+2+4+11+34+156 = 208 graphs and may take a few seconds)
 
 - [ ] **Step 5: Commit**
@@ -680,7 +680,7 @@ def test_not_applicable_for_n_less_than_three():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_conjecture.py -v`
+Run: `python -m pytest tests/test_conjecture.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'py.conjecture'`
 
 - [ ] **Step 3: Write the implementation**
@@ -700,7 +700,7 @@ def check(n: int, spectrum: set) -> bool | None:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_conjecture.py -v`
+Run: `python -m pytest tests/test_conjecture.py -v`
 Expected: PASS (4 tests)
 
 - [ ] **Step 5: Commit**
@@ -823,7 +823,7 @@ def test_run_resumes_from_partial_progress(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_driver.py -v`
+Run: `python -m pytest tests/test_driver.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'py.driver'`
 
 - [ ] **Step 3: Write the implementation**
@@ -975,7 +975,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pytest tests/test_driver.py -v`
+Run: `python -m pytest tests/test_driver.py -v`
 Expected: PASS (4 tests)
 
 - [ ] **Step 5: Commit**
@@ -1019,7 +1019,7 @@ def test_print_summary_reports_counts(tmp_path, capsys):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_analyze.py -v`
+Run: `python -m pytest tests/test_analyze.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'py.analyze'`
 
 - [ ] **Step 3: Write the implementation**
@@ -1072,7 +1072,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_analyze.py -v`
+Run: `python -m pytest tests/test_analyze.py -v`
 Expected: PASS (1 test)
 
 - [ ] **Step 5: Commit**
@@ -1144,12 +1144,12 @@ This task is a regression check over functionality Tasks 1-6 already built and t
 
 - [ ] **Step 2: Run the fast orders (3-7) and verify they pass**
 
-Run: `pytest tests/test_conjecture_regression.py -v -m "not slow"`
+Run: `python -m pytest tests/test_conjecture_regression.py -v -m "not slow"`
 Expected: PASS for orders 3, 4, 5, 6, 7 — zero violations in every case.
 
 - [ ] **Step 3: Run order 8 and verify it passes**
 
-Run: `pytest tests/test_conjecture_regression.py -v -m "slow"`
+Run: `python -m pytest tests/test_conjecture_regression.py -v -m "slow"`
 Expected: PASS — zero violations at order 8.
 
 If any assertion fails at any order (a violation found, or a count mismatch), STOP — do not proceed to Step 4. A count mismatch means a bug in `generate.py` or `driver.py`; a violation means either a counterexample to the conjecture (extremely significant — report immediately, do not treat as a bug to silently fix) or a bug in the spectrum algorithm. Re-run `tests/test_spectrum.py` and `tests/test_cross_validation.py` to narrow it down before touching anything else.
