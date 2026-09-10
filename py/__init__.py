@@ -22,29 +22,31 @@ a future pytest version where these internals are removed), we emit a warning
 instead of failing silently, so the error will be traceable.
 """
 
+import importlib.util
 import sys
 import warnings
 
-try:
-    import _pytest._py.error as error
-    import _pytest._py.path as path
-except ImportError:
-    # _pytest itself is not importable; pytest is not installed in this environment.
-    # Skip the shim — the py package will work fine for its own usage (py.generate),
-    # and pytest won't be present to complain about missing py.path/py.error.
+if importlib.util.find_spec("pytest") is None:
+    # pytest is not installed in this environment; nothing to shim.
     pass
-except (AttributeError, ImportError) as e:
-    # _pytest is importable, but _pytest._py.error or _pytest._py.path is missing or
-    # malformed (e.g. removed in a future pytest version). This is a sign that pytest's
-    # internals have changed in a way that breaks our shim.
-    warnings.warn(
-        f"pytest compatibility shim in py/__init__.py failed to load _pytest._py modules: {e}. "
-        "py.path and py.error will not be available, and pytest may fail at startup.",
-        RuntimeWarning,
-        stacklevel=2,
-    )
 else:
-    # _pytest._py modules loaded successfully; register them in sys.modules so pytest
-    # can find them under the py namespace.
-    sys.modules["py.error"] = error
-    sys.modules["py.path"] = path
+    try:
+        import _pytest._py.error as error
+        import _pytest._py.path as path
+    except ImportError as e:
+        # pytest IS installed, but its internal _pytest._py shim modules are
+        # missing or restructured (e.g. a future pytest version removed them).
+        # Warn loudly rather than silently leaving py.path/py.error undefined,
+        # so this is traceable instead of resurfacing as a mystery
+        # AttributeError deep inside _pytest/compat.py.
+        warnings.warn(
+            f"pytest compatibility shim in py/__init__.py failed to load _pytest._py modules: {e}. "
+            "py.path and py.error will not be available, and pytest may fail at startup.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    else:
+        # _pytest._py modules loaded successfully; register them in sys.modules so pytest
+        # can find them under the py namespace.
+        sys.modules["py.error"] = error
+        sys.modules["py.path"] = path
