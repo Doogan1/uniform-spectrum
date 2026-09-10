@@ -4,6 +4,8 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import pytest
+
 from py import driver
 
 # Order-4 has 11 non-isomorphic graphs (OEIS A000088); indices 0..10.
@@ -91,3 +93,11 @@ def test_run_resumes_from_partial_progress(tmp_path):
     assert status == "complete"
     assert last_index == ORDER_4_GRAPH_COUNT - 1
     assert graphs_checked == ORDER_4_GRAPH_COUNT
+
+
+def test_run_raises_on_order_mismatch(tmp_path):
+    db_path = tmp_path / "mismatch.sqlite"
+    driver.run(4, db_path)  # creates a DB for order 4
+
+    with pytest.raises(ValueError, match="order"):
+        driver.run(5, db_path)  # should refuse, not silently proceed

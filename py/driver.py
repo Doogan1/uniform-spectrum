@@ -1,6 +1,7 @@
 # py/driver.py
 """Batch-checks the uniform spectrum conjecture across all graphs of one order."""
 
+import json
 import sqlite3
 import sys
 from datetime import datetime, timezone
@@ -95,7 +96,7 @@ def record_result(
     if holds is False:
         conn.execute(
             "INSERT INTO violations (graph6, spectrum, found_at) VALUES (?, ?, ?)",
-            (graph6, repr(sorted(spectrum)), datetime.now(timezone.utc).isoformat()),
+            (graph6, json.dumps(sorted(spectrum)), datetime.now(timezone.utc).isoformat()),
         )
 
 
@@ -107,6 +108,13 @@ def run(n: int, db_path, checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL)
     conn = sqlite3.connect(db_path)
     try:
         init_db(conn, n)
+        stored_n = conn.execute("SELECT n FROM progress WHERE id = 0").fetchone()[0]
+        if stored_n != n:
+            raise ValueError(
+                f"Database {db_path} was created for order {stored_n}, "
+                f"but run() was called with order {n}. Refusing to mix results "
+                f"from different orders in the same database."
+            )
         last_index, status = get_progress(conn)
         if status == "complete":
             return
