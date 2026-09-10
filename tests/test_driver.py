@@ -1,4 +1,5 @@
 # tests/test_driver.py
+import json
 import subprocess
 import sqlite3
 import sys
@@ -101,3 +102,50 @@ def test_run_raises_on_order_mismatch(tmp_path):
 
     with pytest.raises(ValueError, match="order"):
         driver.run(5, db_path)  # should refuse, not silently proceed
+
+
+def test_record_details_off_by_default(tmp_path):
+    db_path = tmp_path / "order4.sqlite"
+    driver.run(4, db_path)
+
+    conn = sqlite3.connect(db_path)
+    count = conn.execute("SELECT COUNT(*) FROM graph_results").fetchone()[0]
+    conn.close()
+
+    assert count == 0
+
+
+def test_record_details_populates_graph_results(tmp_path):
+    db_path = tmp_path / "order4.sqlite"
+    driver.run(4, db_path, record_details=True)
+
+    conn = sqlite3.connect(db_path)
+    rows = conn.execute("SELECT graph6, spectrum, compute_seconds FROM graph_results").fetchall()
+    conn.close()
+
+    assert len(rows) == ORDER_4_GRAPH_COUNT
+    graph6s = {row[0] for row in rows}
+    assert len(graph6s) == ORDER_4_GRAPH_COUNT  # every graph6 is unique
+
+    for graph6, spectrum_json, compute_seconds in rows:
+        spectrum = json.loads(spectrum_json)
+        assert isinstance(spectrum, list)
+        assert all(isinstance(k, int) for k in spectrum)
+        assert compute_seconds >= 0
+
+
+def test_cli_record_details_flag(tmp_path):
+    db_path = tmp_path / "order4.sqlite"
+    result = subprocess.run(
+        [sys.executable, "py/driver.py", "4", "--db", str(db_path), "--record-details"],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO_ROOT),
+    )
+    assert result.returncode == 0, result.stderr
+    assert "took" in result.stdout.lower()
+
+    conn = sqlite3.connect(db_path)
+    count = conn.execute("SELECT COUNT(*) FROM graph_results").fetchone()[0]
+    conn.close()
+    assert count == ORDER_4_GRAPH_COUNT
