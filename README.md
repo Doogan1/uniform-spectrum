@@ -16,5 +16,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cmake -S core -B core/build -Dpybind11_DIR=$(python -m pybind11 --cmakedir)
 cmake --build core/build
-pytest
+# Use `python -m pytest`, not bare `pytest` -- this project's py/ package
+# collides with a pytest-internal compatibility shim otherwise (see
+# py/__init__.py for why).
+python -m pytest
 ```
