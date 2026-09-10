@@ -10,12 +10,8 @@ add_library(spectrum_core STATIC
     src/graph6.cpp
 )
 target_include_directories(spectrum_core PUBLIC include)
+# Needed for linking static library into a pybind11 shared module
 set_target_properties(spectrum_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 pybind11_add_module(uniform_spectrum_core src/bindings.cpp)
 target_link_libraries(uniform_spectrum_core PRIVATE spectrum_core)
-
-# Override Python include directory if local version is available
-if(EXISTS "${CMAKE_SOURCE_DIR}/../local-python-include/python3.14")
-  target_include_directories(uniform_spectrum_core PRIVATE "${CMAKE_SOURCE_DIR}/../local-python-include/python3.14")
-endif()
