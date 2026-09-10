@@ -6,6 +6,7 @@
 
 #include "graph.hpp"
 #include "graph6.hpp"
+#include "spectrum.hpp"
 
 namespace py = pybind11;
 
@@ -26,9 +27,16 @@ std::vector<std::pair<int, int>> parse_graph6_edges(const std::string& g6) {
     return edges;
 }
 
+std::set<int> spectrum_from_graph6(const std::string& g6) {
+    Graph g = parse_graph6(g6);
+    return uniform_spectrum(g);
+}
+
 }  // namespace
 
 PYBIND11_MODULE(uniform_spectrum_core, m) {
     m.def("parse_graph6_edges", &parse_graph6_edges,
           "Parse a graph6 string and return its edges as (u, v) pairs with u < v");
+    m.def("spectrum_from_graph6", &spectrum_from_graph6,
+          "Compute the uniform spectrum of a graph given as a graph6 string");
 }

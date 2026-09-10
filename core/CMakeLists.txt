@@ -8,6 +8,7 @@ find_package(pybind11 CONFIG REQUIRED)
 
 add_library(spectrum_core STATIC
     src/graph6.cpp
+    src/spectrum.cpp
 )
 target_include_directories(spectrum_core PUBLIC include)
 # Needed for linking static library into a pybind11 shared module
