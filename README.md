@@ -89,6 +89,26 @@ time for the run (including graph generation and database writes);
 `SUM(compute_seconds)` above gives just the algorithm's own compute time,
 which will be smaller.
 
+For common filters, `py/query.py` saves you from hand-writing the JSON
+parsing above:
+
+```bash
+# Every order-9 graph with a singleton spectrum:
+python py/query.py results/order_9.sqlite --spectrum-size 1
+
+# Graphs whose spectrum contains 3, sorted by how long they took to compute:
+python py/query.py results/order_9.sqlite --contains 3 --sort compute_seconds --desc
+
+# Just the count, without listing every match:
+python py/query.py results/order_9.sqlite --min-size 2 --max-size 4 --count
+```
+
+Filters (`--spectrum-size`, `--min-size`/`--max-size`, `--contains`,
+`--not-contains`) combine with AND. Run `python py/query.py --help` for the
+full list, including `--sort` and `--limit`. For anything these filters
+don't cover, querying the table directly (as shown above) still works —
+this script only wraps the common cases.
+
 **Caveat:** if you resume a database that was started *without*
 `--record-details` and add the flag partway through, only the graphs
 processed *after* that point get detail rows — there's no retroactive
