@@ -109,6 +109,34 @@ full list, including `--sort` and `--limit`. For anything these filters
 don't cover, querying the table directly (as shown above) still works —
 this script only wraps the common cases.
 
+### Visualizing graphs
+
+`py/visualize.py` draws a graph (from its graph6 encoding) with `networkx` +
+`matplotlib`, titled with its graph6 string and uniform spectrum. Render one
+graph interactively:
+
+```bash
+python py/visualize.py "H???F~~"
+```
+
+...or save it to a file instead:
+
+```bash
+python py/visualize.py "H???F~~" --out figs/example.png
+```
+
+It composes directly with `query.py` — pipe query results in with `--stdin`
+and `--outdir` to save one image per match:
+
+```bash
+python py/query.py results/order_9.sqlite --spectrum-size 1 --limit 10 \
+  | python py/visualize.py --stdin --outdir figs/
+```
+
+Each file is named after its (URL-encoded, for filesystem safety) graph6
+string. `--format {png,pdf,svg}` controls the image format for `--outdir`
+mode (`--out` infers it from the file extension you give it).
+
 **Caveat:** if you resume a database that was started *without*
 `--record-details` and add the flag partway through, only the graphs
 processed *after* that point get detail rows — there's no retroactive
